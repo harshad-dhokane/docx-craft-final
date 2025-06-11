@@ -1,11 +1,26 @@
-node_modules
-npm-debug.log
-dist
-.env
-.env.*
+# Version control
 .git
 .gitignore
-README.md
-.vscode
+
+# Dependencies
+node_modules
+dist
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+
+# Development files
 *.log
-drizzle/migrations 
+.vscode
+.idea
+*.md
+*.test.ts
+*.spec.ts
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,46 +1,37 @@
-# Use Node.js 20 as the base image
-FROM node:20-slim
+# Use Node.js as base image
+FROM node:20-bullseye-slim
 
 # Install LibreOffice and other dependencies
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
     libreoffice \
     libreoffice-writer \
-    libreoffice-calc \
-    fonts-liberation2 \
-    fonts-noto-cjk \
+    fonts-liberation \
+    ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package files first
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies and TypeScript globally
-RUN npm install && \
-    npm install -g typescript
+# Install dependencies
+RUN npm install
 
 # Copy the rest of the application
 COPY . .
 
-# Create necessary directories with proper permissions
-RUN mkdir -p node_modules/.vite && \
-    mkdir -p dist && \
-    chown -R node:node /usr/src/app
-
-# Switch to node user
-USER node
+# Build the application
+RUN npm run build
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Build application
-RUN npm run build
-
-# Expose port
+# Expose the port the app runs on
 EXPOSE 5000
 
 # Start the application
