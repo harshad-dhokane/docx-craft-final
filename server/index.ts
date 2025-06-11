@@ -11,20 +11,39 @@ app.use(express.urlencoded({ extended: false }));
 // Improved CORS logic
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
-  : undefined;
+  : [
+      'https://docxcraft.onrender.com',
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+      'http://0.0.0.0:5000',
+      'https://*.replit.dev',
+      'http://*.replit.dev'
+    ];
+
+// Add current Replit host if available
+if (process.env.REPL_SLUG) {
+  allowedOrigins.push(`https://${process.env.REPL_ID}-00-${process.env.REPL_SLUG}.${process.env.REPLIT_CLUSTER || 'sisko'}.replit.dev`);
+}
+if (process.env.REPL_SLUG) {
+  allowedOrigins.push(`https://${process.env.REPL_SLUG}--${process.env.REPL_OWNER?.toLowerCase() || 'user'}.replit.dev`);
+}
 
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true); // allow non-browser requests
-      if (!allowedOrigins || allowedOrigins.includes("*")) {
-        console.log(`[CORS] Allowing all origins`);
+      
+      // Allow all origins in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[CORS] Development mode - allowing origin: ${origin}`);
         return callback(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
+      
+      if (allowedOrigins.includes("*") || allowedOrigins.some(allowed => origin?.includes(allowed))) {
         console.log(`[CORS] Allowing origin: ${origin}`);
         return callback(null, true);
       }
+      
       console.warn(`[CORS] Blocked origin: ${origin}`);
       return callback(new Error("Not allowed by CORS"));
     },
@@ -82,44 +101,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   // Set up production or development environment
   if (process.env.NODE_ENV === "production") {
     setupProduction(app);
-    // Serve static files from Vite build output using project root-relative path
-    const path = require("path");
-    const projectRoot = path.resolve(__dirname, "..");
-    const staticPath = path.join(projectRoot, "dist", "public");
-    const fs = require("fs");
-    
-    if (!fs.existsSync(staticPath)) {
-      console.error(`[Static] Directory does not exist: ${staticPath}`);
-      console.error(`[Static] Current directory: ${__dirname}`);
-      console.error(`[Static] Project root: ${projectRoot}`);
-      // List contents of dist directory if it exists
-      const distPath = path.join(projectRoot, "dist");
-      if (fs.existsSync(distPath)) {
-        console.log(`[Static] Contents of ${distPath}:`, fs.readdirSync(distPath));
-      }
-    } else {
-      console.log(`[Static] Serving static files from: ${staticPath}`);
-      console.log(`[Static] Contents:`, fs.readdirSync(staticPath));
-    }
-
-    // Serve static files with appropriate caching headers
-    app.use(express.static(staticPath, {
-      maxAge: '1d',
-      etag: true,
-    }));
-
-    // Serve index.html for all routes not starting with /api
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith('/api')) {
-        return next();
-      }
-      res.sendFile("index.html", { 
-        root: staticPath,
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-    });
   } else {
     await setupVite(app, server);
   }

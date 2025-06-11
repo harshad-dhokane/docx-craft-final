@@ -1,3 +1,4 @@
+
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
@@ -48,49 +49,76 @@ export async function setupVite(app: Express, server: Server) {
     return;
   }
 
-  const serverOptions = {
-    middlewareMode: true as const,
-    hmr: { server },
-    host: true,
-    strictPort: true,
-  };
+  try {
+    const vite = await createViteServer({
+      ...viteConfig({
+        command: 'serve',
+        mode: 'development'
+      }),
+      configFile: false,
+      customLogger: viteLogger,
+      server: {
+        middlewareMode: true,
+        hmr: { 
+          server,
+          host: '0.0.0.0'
+        },
+        host: '0.0.0.0',
+        strictPort: false,
+        fs: {
+          strict: false
+        },
+        allowedHosts: [
+          'localhost',
+          '127.0.0.1',
+          '0.0.0.0',
+          '.replit.dev',
+          '.onrender.com'
+        ]
+      },
+      appType: "custom",
+    });
 
-  const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
-    customLogger: viteLogger,
-    server: serverOptions,
-    appType: "custom",
-  });
+    app.use(vite.middlewares);
 
-  app.use(vite.middlewares);
+    app.use("*", async (req, res, next) => {
+      const url = req.originalUrl;
 
-  app.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
+      try {
+        // Skip API routes
+        if (url.startsWith("/api")) {
+          next();
+          return;
+        }
 
-    try {
-      // Skip API routes
-      if (url.startsWith("/api")) {
-        next();
-        return;
+        const clientTemplate = path.resolve(
+          import.meta.dirname,
+          "..",
+          "client",
+          "index.html"
+        );
+
+        if (!fs.existsSync(clientTemplate)) {
+          console.error(`[Vite] Template not found: ${clientTemplate}`);
+          return res.status(500).send('Template not found');
+        }
+
+        let template = await fs.promises.readFile(clientTemplate, "utf-8");
+        const html = await vite.transformIndexHtml(url, template);
+        
+        res.status(200)
+          .set({ "Content-Type": "text/html" })
+          .end(html);
+      } catch (e) {
+        console.error(`[Vite] Error processing ${url}:`, e);
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
       }
+    });
 
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html"
-      );
-
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      const html = await vite.transformIndexHtml(url, template);
-      
-      res.status(200)
-        .set({ "Content-Type": "text/html" })
-        .end(html);
-    } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
-    }
-  });
+    console.log('[Vite] Development server setup complete');
+  } catch (error) {
+    console.error('[Vite] Failed to setup development server:', error);
+    throw error;
+  }
 }
