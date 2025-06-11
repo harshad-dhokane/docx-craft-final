@@ -15,11 +15,13 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
   : [
       'https://docxcraft.onrender.com',
+      'https://docx-craft-final.onrender.com',
       'http://localhost:5000',
       'http://127.0.0.1:5000',
       'http://0.0.0.0:5000',
       'https://*.replit.dev',
-      'http://*.replit.dev'
+      'http://*.replit.dev',
+      'https://*.onrender.com'
     ];
 
 // Add current Replit host if available

@@ -6,12 +6,13 @@ services:
     region: singapore
     plan: free
     branch: main
-    dockerfilePath: ./Dockerfile
-    envVars:
+    dockerfilePath: ./Dockerfile    envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5000
+      - key: ALLOWED_ORIGINS
+        value: https://docx-craft-final.onrender.com,https://docxcraft.onrender.com
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
