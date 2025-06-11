@@ -16,13 +16,6 @@ export default defineConfig({
         ]
       : []),
   ],
-  server: {
-    allowedHosts: [
-      'localhost',
-      '127.0.0.1',
-      'docxcraft.onrender.com'
-    ],
-  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -34,5 +27,17 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'wouter'],
+        }
+      }
+    }
   },
+  server: {
+    host: true, // Needed for Render.com
+    strictPort: true,
+    port: parseInt(process.env.PORT || '5000', 10)
+  }
 });
