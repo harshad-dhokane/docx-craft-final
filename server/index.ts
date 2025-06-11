@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite } from "./vite";
 import { setupProduction } from "./production";
@@ -6,6 +7,10 @@ import { setupProduction } from "./production";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+  credentials: true,
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -48,6 +53,11 @@ app.use((req, res, next) => {
   // Set up production or development environment
   if (process.env.NODE_ENV === "production") {
     setupProduction(app);
+    // Serve static files from client build
+    app.use(express.static("../client/dist"));
+    app.get("*", (_req, res) => {
+      res.sendFile("index.html", { root: "../client/dist" });
+    });
   } else {
     await setupVite(app, server);
   }
