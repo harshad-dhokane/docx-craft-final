@@ -38,6 +38,12 @@ export default defineConfig({
   server: {
     host: true, // Needed for Render.com
     strictPort: true,
-    port: parseInt(process.env.PORT || '5000', 10)
+    port: parseInt(process.env.PORT || '5000', 10),
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
+    }
   }
 });

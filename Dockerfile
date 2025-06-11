@@ -1,12 +1,14 @@
 # Use Node.js 20 as the base image
 FROM node:20-slim
 
-# Install LibreOffice and dependencies
+# Install LibreOffice and other dependencies
 RUN apt-get update && \
     apt-get install -y \
     libreoffice \
     libreoffice-writer \
     libreoffice-calc \
+    fonts-liberation2 \
+    fonts-noto-cjk \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -31,10 +33,14 @@ RUN mkdir -p node_modules/.vite && \
 # Switch to node user
 USER node
 
-# Build TypeScript
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=5000
+
+# Build application
 RUN npm run build
 
-# Expose port (use PORT from environment variable)
+# Expose port
 EXPOSE 5000
 
 # Start the application
