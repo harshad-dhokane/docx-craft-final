@@ -16,6 +16,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : [
       'https://docxcraft.onrender.com',
       'https://docx-craft-final.onrender.com',
+      'https://docx-craft-node.onrender.com',
       'http://localhost:5000',
       'http://127.0.0.1:5000',
       'http://0.0.0.0:5000',
@@ -43,7 +44,15 @@ app.use(
         return callback(null, true);
       }
       
-      if (allowedOrigins.includes("*") || allowedOrigins.some(allowed => origin?.includes(allowed))) {
+      // More lenient check for Render domains
+      if (allowedOrigins.includes("*") || 
+          allowedOrigins.some(allowed => {
+            if (allowed.includes('*')) {
+              const pattern = new RegExp(allowed.replace('*', '.*'));
+              return pattern.test(origin);
+            }
+            return origin?.includes(allowed);
+          })) {
         console.log(`[CORS] Allowing origin: ${origin}`);
         return callback(null, true);
       }
