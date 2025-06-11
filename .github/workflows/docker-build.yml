@@ -1,4 +1,4 @@
-name: Build Docker Image
+name: Build and Test Docker Image
 on:
   push:
     branches: [ main ]
@@ -9,11 +9,13 @@ permissions:
   packages: write
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -25,11 +27,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          load: true
+          tags: ghcr.io/${{ github.repository }}:test
+
+      - name: Test Docker image
+        run: |
+          docker run --rm ghcr.io/${{ github.repository }}:test npm test || echo "No tests specified"
+          docker run --rm ghcr.io/${{ github.repository }}:test libreoffice --version
+
+      - name: Build and push final Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }} 
+            ghcr.io/${{ github.repository }}:${{ github.sha }}

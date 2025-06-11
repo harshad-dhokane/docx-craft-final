@@ -1,21 +1,39 @@
+# Use Node.js 20 as the base image
 FROM node:20-slim
 
-WORKDIR /app
+# Install LibreOffice and dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    libreoffice \
+    libreoffice-writer \
+    libreoffice-calc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory and create node user
+WORKDIR /usr/src/app
+RUN groupadd -r nodejs && \
+    useradd -r -g nodejs -s /bin/bash -d /usr/src/app nodejs && \
+    chown -R nodejs:nodejs /usr/src/app
 
 # Copy package files
-COPY package*.json ./
+COPY --chown=nodejs:nodejs package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies and TypeScript globally
+RUN npm install && \
+    npm install -g typescript
 
-# Copy source code
-COPY . .
+# Copy the rest of the application
+COPY --chown=nodejs:nodejs . .
 
-# Build frontend and server
+# Switch to node user
+USER nodejs
+
+# Build TypeScript
 RUN npm run build
 
-# Expose the port your app runs on
+# Expose port
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"] 
+CMD ["npm", "start"]
