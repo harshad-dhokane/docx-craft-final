@@ -44,6 +44,12 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true
       }
-    }
+    },
+    // Adding allowed hosts configuration
+    allowedHosts: [
+      'docxcraft.onrender.com',
+      'localhost',
+      '127.0.0.1'
+    ]
   }
 });
