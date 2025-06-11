@@ -41,7 +41,6 @@ export default defineConfig({
   },
   server: {
     host: true,
-    strictPort: true,
     port: parseInt(process.env.PORT || '5000', 10),
     proxy: {
       '/api': {
@@ -51,11 +50,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: true
       }
-    }
+    },
+    allowedHosts: ['docxcraft.onrender.com']
   },
   preview: {
     host: true,
-    port: parseInt(process.env.PORT || '5000', 10),
-    strictPort: true
+    port: parseInt(process.env.PORT || '5000', 10)
   }
 });
