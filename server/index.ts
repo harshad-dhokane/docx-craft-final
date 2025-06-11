@@ -82,9 +82,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   // Set up production or development environment
   if (process.env.NODE_ENV === "production") {
     setupProduction(app);
-    // Serve static files from client build (absolute path)
+    // Serve static files from Vite build output
     const path = require("path");
-    const staticPath = path.resolve(__dirname, "../client/dist");
+    const staticPath = path.resolve(__dirname, "../dist/public");
     const fs = require("fs");
     if (!fs.existsSync(staticPath)) {
       console.error(`[Static] Directory does not exist: ${staticPath}`);
