@@ -30,10 +30,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'wouter'],
+          vendor: ['react', 'react-dom', 'wouter']
         }
       }
-    }
+    },
+    // Add these options
+    sourcemap: false,
+    minify: true,
+    cssMinify: true
   },
   server: {
     host: true,
@@ -44,14 +48,14 @@ export default defineConfig({
         target: process.env.NODE_ENV === 'production'
           ? 'https://docxcraft.onrender.com'
           : 'http://localhost:5000',
-        changeOrigin: true
+        changeOrigin: true,
+        secure: true
       }
-    },
-    allowedHosts: [
-      'docxcraft.onrender.com',
-      'localhost',
-      '127.0.0.1',
-      '.onrender.com'
-    ]
+    }
+  },
+  preview: {
+    host: true,
+    port: parseInt(process.env.PORT || '5000', 10),
+    strictPort: true
   }
 });
