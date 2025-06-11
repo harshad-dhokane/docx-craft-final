@@ -40,7 +40,7 @@ export default defineConfig({
     cssMinify: true
   },
   server: {
-    host: true,
+    host: '0.0.0.0',
     port: parseInt(process.env.PORT || '5000', 10),
     proxy: {
       '/api': {
@@ -51,10 +51,25 @@ export default defineConfig({
         secure: true
       }
     },
-    allowedHosts: ['docxcraft.onrender.com']
+    cors: true,
+    allowedHosts: [
+      'docxcraft.onrender.com',
+      '.onrender.com',
+      'localhost',
+      '127.0.0.1'
+    ],
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    }
   },
   preview: {
-    host: true,
-    port: parseInt(process.env.PORT || '5000', 10)
+    host: '0.0.0.0',
+    port: parseInt(process.env.PORT || '5000', 10),
+    allowedHosts: [
+      'docxcraft.onrender.com',
+      '.onrender.com',
+      'localhost',
+      '127.0.0.1'
+    ]
   }
 });
