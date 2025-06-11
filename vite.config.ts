@@ -36,20 +36,22 @@ export default defineConfig({
     }
   },
   server: {
-    host: true, // Needed for Render.com
+    host: true,
     strictPort: true,
     port: parseInt(process.env.PORT || '5000', 10),
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.NODE_ENV === 'production'
+          ? 'https://docxcraft.onrender.com'
+          : 'http://localhost:5000',
         changeOrigin: true
       }
     },
-    // Adding allowed hosts configuration
     allowedHosts: [
       'docxcraft.onrender.com',
       'localhost',
-      '127.0.0.1'
+      '127.0.0.1',
+      '.onrender.com'
     ]
   }
 });
