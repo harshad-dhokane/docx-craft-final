@@ -10,30 +10,32 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory and create node user
+# Set working directory
 WORKDIR /usr/src/app
-RUN groupadd -r nodejs && \
-    useradd -r -g nodejs -s /bin/bash -d /usr/src/app nodejs && \
-    chown -R nodejs:nodejs /usr/src/app
 
-# Copy package files
-COPY --chown=nodejs:nodejs package*.json ./
+# Copy package files first
+COPY package*.json ./
 
 # Install dependencies and TypeScript globally
 RUN npm install && \
     npm install -g typescript
 
 # Copy the rest of the application
-COPY --chown=nodejs:nodejs . .
+COPY . .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p node_modules/.vite && \
+    mkdir -p dist && \
+    chown -R node:node /usr/src/app
 
 # Switch to node user
-USER nodejs
+USER node
 
 # Build TypeScript
 RUN npm run build
 
-# Expose port
-EXPOSE 3000
+# Expose port (use PORT from environment variable)
+EXPOSE 5000
 
 # Start the application
 CMD ["npm", "start"]
