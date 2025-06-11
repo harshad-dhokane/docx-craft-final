@@ -7,10 +7,30 @@ import { setupProduction } from "./production";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
-  credentials: true,
-}));
+
+// Improved CORS logic
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : undefined;
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow non-browser requests
+      if (!allowedOrigins || allowedOrigins.includes("*")) {
+        console.log(`[CORS] Allowing all origins`);
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        console.log(`[CORS] Allowing origin: ${origin}`);
+        return callback(null, true);
+      }
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -40,6 +60,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Log 403 errors
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err && err.message && err.message.includes("CORS")) {
+    console.error(`[403][CORS] ${req.method} ${req.path} :: ${err.message}`);
+    return res.status(403).json({ message: "Forbidden: CORS" });
+  }
+  next(err);
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -53,10 +82,18 @@ app.use((req, res, next) => {
   // Set up production or development environment
   if (process.env.NODE_ENV === "production") {
     setupProduction(app);
-    // Serve static files from client build
-    app.use(express.static("../client/dist"));
+    // Serve static files from client build (absolute path)
+    const path = require("path");
+    const staticPath = path.resolve(__dirname, "../client/dist");
+    const fs = require("fs");
+    if (!fs.existsSync(staticPath)) {
+      console.error(`[Static] Directory does not exist: ${staticPath}`);
+    } else {
+      console.log(`[Static] Serving static files from: ${staticPath}`);
+    }
+    app.use(express.static(staticPath));
     app.get("*", (_req, res) => {
-      res.sendFile("index.html", { root: "../client/dist" });
+      res.sendFile("index.html", { root: staticPath });
     });
   } else {
     await setupVite(app, server);
