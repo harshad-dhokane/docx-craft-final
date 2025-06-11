@@ -44,14 +44,13 @@ export default defineConfig(({ command }) => {
           secure: true
         }
       },
-      ...(isDev && {
-        allowedHosts: [
+      allowedHosts: [
           'docxcraft.onrender.com',
           '.onrender.com',
           'localhost',
           '127.0.0.1'
         ]
-      })
+
     },
     preview: {
       host: '0.0.0.0',
