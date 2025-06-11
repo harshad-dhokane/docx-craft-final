@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite } from "./vite";
 import { setupProduction } from "./production";
@@ -99,9 +101,16 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 
   // Set up production or development environment
-  if (process.env.NODE_ENV === "production") {
+  // Force production mode on Render or when dist directory exists
+  const isProduction = process.env.NODE_ENV === "production" || 
+                      process.env.RENDER || 
+                      fs.existsSync(path.join(process.cwd(), 'dist', 'public'));
+                      
+  if (isProduction) {
+    console.log("[Server] Running in production mode");
     setupProduction(app);
   } else {
+    console.log("[Server] Running in development mode");
     await setupVite(app, server);
   }
 

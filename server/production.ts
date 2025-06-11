@@ -7,15 +7,15 @@ import type { Express, Request, Response, NextFunction } from 'express';
 export function setupProduction(app: Express) {
   // Use proper path resolution for production
   const projectRoot = path.resolve(process.cwd());
-  const staticPath = path.join(projectRoot, 'dist', 'public');
+  let staticPath = path.join(projectRoot, 'dist', 'public');
   
   console.log(`[Production] Project root: ${projectRoot}`);
   console.log(`[Production] Static path: ${staticPath}`);
   
+  // Try alternative paths if primary doesn't exist
   if (!fs.existsSync(staticPath)) {
-    console.error(`[Production] Static directory does not exist: ${staticPath}`);
+    console.warn(`[Production] Primary static directory does not exist: ${staticPath}`);
     
-    // Try alternative paths
     const altPaths = [
       path.join(projectRoot, 'dist'),
       path.join(projectRoot, 'build'),
@@ -23,13 +23,25 @@ export function setupProduction(app: Express) {
       path.join(projectRoot, 'client', 'build')
     ];
     
+    let foundPath = null;
     for (const altPath of altPaths) {
       if (fs.existsSync(altPath)) {
-        console.log(`[Production] Found alternative static path: ${altPath}`);
-        console.log(`[Production] Contents:`, fs.readdirSync(altPath));
+        const indexExists = fs.existsSync(path.join(altPath, 'index.html'));
+        console.log(`[Production] Found alternative path: ${altPath} (has index.html: ${indexExists})`);
+        if (indexExists) {
+          foundPath = altPath;
+          break;
+        }
       }
     }
-    return;
+    
+    if (foundPath) {
+      staticPath = foundPath;
+      console.log(`[Production] Using alternative static path: ${staticPath}`);
+    } else {
+      console.error(`[Production] No valid static directory found`);
+      return;
+    }
   }
 
   console.log(`[Production] Serving static files from: ${staticPath}`);
