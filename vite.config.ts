@@ -1,61 +1,24 @@
+import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import tsconfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig(({ command }) => {
-  const isDev = command === 'serve';
-  return {
-    plugins: [
-      react(),
-      runtimeErrorOverlay(),
-    ],
-    resolve: {
-      alias: {
-        "@": path.resolve(import.meta.dirname, "client", "src"),
-        "@shared": path.resolve(import.meta.dirname, "shared"),
-        "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-      },
-    },
-    root: path.resolve(import.meta.dirname, "client"),
-    build: {
-      outDir: path.resolve(import.meta.dirname, "dist/public"),
-      emptyOutDir: true,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'wouter']
-          }
-        }
-      },
-      sourcemap: false,
-      minify: true,
-      cssMinify: true
-    },
-    server: {
-      host: '0.0.0.0',
-      port: parseInt(process.env.PORT || '5000', 10),
-      proxy: {
-        '/api': {
-          target: process.env.NODE_ENV === 'production'
-            ? 'https://docxcraft.onrender.com'
-            : 'http://localhost:5000',
-          changeOrigin: true,
-          secure: true
-        }
-      },
-      allowedHosts: [
-          'docxcraft.onrender.com',
-          '.onrender.com',
-          'localhost',
-          '127.0.0.1',
-          '.replit.dev'
-        ]
+declare module "@remix-run/node" {
+  interface Future {
+    v3_singleFetch: true;
+  }
+}
 
-    },
-    preview: {
-      host: '0.0.0.0',
-      port: parseInt(process.env.PORT || '5000', 10)
-    }
-  };
+export default defineConfig({
+  plugins: [
+    remix({
+      future: {
+        v3_fetcherPersist: true,
+        v3_relativeSplatPath: true,
+        v3_throwAbortReason: true,
+        v3_singleFetch: true,
+        v3_lazyRouteDiscovery: true,
+      },
+    }),
+    tsconfigPaths(),
+  ],
 });
